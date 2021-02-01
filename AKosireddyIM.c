@@ -6,7 +6,7 @@
 #include "AKosireddyIM.h"
 #define BUFFERSIZE 100
 
-int all_paths(int start_city, int end_city, int** adj_matrix, int n);
+int all_paths(int start_city, int current_city, int end_city, int** adj_matrix, int n);
 int* fastest_paths(int** path_matrix);
 int main(int argc, char* argv[])
 {
@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
         ++i;
     }
 
-    int minimum_times = all_paths(1, 2, adj_matrix, n);
+    int minimum_times = all_paths(1, 1, 2, adj_matrix, n);
     /*for (int path_row = 0; path_row < n; ++path_row) {
         for (int path_col = 0; path_col < n; ++path_col) {
             printf("%d ", path_matrix[path_row][path_col]);
@@ -42,34 +42,33 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-int all_paths(int start_city, int end_city, int** adj_matrix, int n) {
+int all_paths(int start_city, int current_city, int end_city, int** adj_matrix, int n) {
+    if (current_city > n) return INT_MAX;
     int* times = malloc(n * sizeof(int));
     for (int i = 0; i < n; ++i) times[i] = INT_MAX;
-    int m = INT_MAX;
-    static bool visited[300][300];
-    visited[start_city][start_city] = true;
-     if (start_city == 1) {
-        times[0] = adj_matrix[0][0];
-        start_city = 2;
-        if (start_city == end_city && start_city + 1 <= n) ++start_city;
-    } 
-    for (int i = start_city - 2; i < n; ++i) {
-        if (i != end_city - 2) {
+    static bool visited[300];
+    visited[start_city - 1] = true;
+    if (current_city != end_city)visited[current_city - 1] = true;
+    int* queue = malloc(n * sizeof(int));
+    int i = 0;
+    for (; i < n; ++i) {
+        if (!visited[i] && current_city != end_city) {
             if (times[i] == INT_MAX) times[i] = 0;
-            times[i] += all_paths(start_city + 1, end_city, adj_matrix, n);
+            times[i] += all_paths(start_city + 1, i + 1, end_city, adj_matrix, n);
         }
-        else {
-            if (times[i] == INT_MAX) times[i] = 0;
-            times[i] += adj_matrix[start_city - 2][end_city - 1];
-        }
-
     }
     int min_time = INT_MAX;
-    for (int i = 0; i < n; ++i) {
-        if (times[i] < min_time && times[i] > -1) {
-            min_time = times[i];
+    if (current_city == end_city) return adj_matrix[current_city - 2][end_city - 2];
+    if (current_city > 1) return adj_matrix[current_city - 2][end_city - 1] + adj_matrix[current_city - 2][start_city - 2];
+    else if (current_city == 1) {
+        for (int i = 0; i < n; ++i) {
+            if (times[i] < min_time && times[i] > -1) {
+                min_time = times[i];
+            }
         }
     }
+    else return min(adj_matrix[current_city - 2][end_city - 1], all_paths(start_city, current_city + 1, end_city, adj_matrix, n));
+
     return min_time;
 }
 
